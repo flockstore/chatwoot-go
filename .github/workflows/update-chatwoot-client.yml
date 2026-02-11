@@ -2,6 +2,11 @@ name: Update Chatwoot Go Client
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+      - develop
   schedule:
     - cron: "17 4 * * *"
 
@@ -36,7 +41,7 @@ jobs:
           fi
 
       - name: Create Pull Request
-        if: steps.changes.outputs.changed == 'true'
+        if: github.event_name != 'push' && steps.changes.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           commit-message: "chore: update generated Chatwoot API client"
