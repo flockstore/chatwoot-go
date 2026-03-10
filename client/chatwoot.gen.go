@@ -470,6 +470,12 @@ const (
 	Snoozed  ToggleStatusOfAConversationJSONBodyStatus = "snoozed"
 )
 
+// Defines values for ToggleTypingStatusOfAConversationJSONBodyTypingStatus.
+const (
+	ToggleTypingStatusOfAConversationJSONBodyTypingStatusOff ToggleTypingStatusOfAConversationJSONBodyTypingStatus = "off"
+	ToggleTypingStatusOfAConversationJSONBodyTypingStatusOn  ToggleTypingStatusOfAConversationJSONBodyTypingStatus = "on"
+)
+
 // Defines values for GetAccountCustomAttributeParamsAttributeModel.
 const (
 	N0 GetAccountCustomAttributeParamsAttributeModel = "0"
@@ -486,8 +492,8 @@ const (
 
 // Defines values for ToggleTypingStatusJSONBodyTypingStatus.
 const (
-	Off ToggleTypingStatusJSONBodyTypingStatus = "off"
-	On  ToggleTypingStatusJSONBodyTypingStatus = "on"
+	ToggleTypingStatusJSONBodyTypingStatusOff ToggleTypingStatusJSONBodyTypingStatus = "off"
+	ToggleTypingStatusJSONBodyTypingStatusOn  ToggleTypingStatusJSONBodyTypingStatus = "on"
 )
 
 // Account defines model for account.
@@ -4019,6 +4025,18 @@ type ToggleStatusOfAConversationJSONBody struct {
 // ToggleStatusOfAConversationJSONBodyStatus defines parameters for ToggleStatusOfAConversation.
 type ToggleStatusOfAConversationJSONBodyStatus string
 
+// ToggleTypingStatusOfAConversationJSONBody defines parameters for ToggleTypingStatusOfAConversation.
+type ToggleTypingStatusOfAConversationJSONBody struct {
+	// IsPrivate Whether the typing event is for private notes.
+	IsPrivate *bool `json:"is_private,omitempty"`
+
+	// TypingStatus Typing status to set.
+	TypingStatus ToggleTypingStatusOfAConversationJSONBodyTypingStatus `json:"typing_status"`
+}
+
+// ToggleTypingStatusOfAConversationJSONBodyTypingStatus defines parameters for ToggleTypingStatusOfAConversation.
+type ToggleTypingStatusOfAConversationJSONBodyTypingStatus string
+
 // GetAccountCustomAttributeParams defines parameters for GetAccountCustomAttribute.
 type GetAccountCustomAttributeParams struct {
 	// AttributeModel conversation_attribute(0)/contact_attribute(1)
@@ -4327,6 +4345,9 @@ type TogglePriorityOfAConversationJSONRequestBody TogglePriorityOfAConversationJ
 
 // ToggleStatusOfAConversationJSONRequestBody defines body for ToggleStatusOfAConversation for application/json ContentType.
 type ToggleStatusOfAConversationJSONRequestBody ToggleStatusOfAConversationJSONBody
+
+// ToggleTypingStatusOfAConversationJSONRequestBody defines body for ToggleTypingStatusOfAConversation for application/json ContentType.
+type ToggleTypingStatusOfAConversationJSONRequestBody ToggleTypingStatusOfAConversationJSONBody
 
 // AddNewCustomAttributeToAccountJSONRequestBody defines body for AddNewCustomAttributeToAccount for application/json ContentType.
 type AddNewCustomAttributeToAccountJSONRequestBody = CustomAttributeCreateUpdatePayload
@@ -4769,6 +4790,11 @@ type ClientInterface interface {
 	ToggleStatusOfAConversationWithBody(ctx context.Context, accountId AccountId, conversationId ConversationId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ToggleStatusOfAConversation(ctx context.Context, accountId AccountId, conversationId ConversationId, body ToggleStatusOfAConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ToggleTypingStatusOfAConversationWithBody request with any body
+	ToggleTypingStatusOfAConversationWithBody(ctx context.Context, accountId AccountId, conversationId ConversationId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ToggleTypingStatusOfAConversation(ctx context.Context, accountId AccountId, conversationId ConversationId, body ToggleTypingStatusOfAConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetAccountCustomAttribute request
 	GetAccountCustomAttribute(ctx context.Context, accountId AccountId, params *GetAccountCustomAttributeParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5965,6 +5991,30 @@ func (c *Client) ToggleStatusOfAConversationWithBody(ctx context.Context, accoun
 
 func (c *Client) ToggleStatusOfAConversation(ctx context.Context, accountId AccountId, conversationId ConversationId, body ToggleStatusOfAConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewToggleStatusOfAConversationRequest(c.Server, accountId, conversationId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ToggleTypingStatusOfAConversationWithBody(ctx context.Context, accountId AccountId, conversationId ConversationId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewToggleTypingStatusOfAConversationRequestWithBody(c.Server, accountId, conversationId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ToggleTypingStatusOfAConversation(ctx context.Context, accountId AccountId, conversationId ConversationId, body ToggleTypingStatusOfAConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewToggleTypingStatusOfAConversationRequest(c.Server, accountId, conversationId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10041,6 +10091,60 @@ func NewToggleStatusOfAConversationRequestWithBody(server string, accountId Acco
 	}
 
 	operationPath := fmt.Sprintf("/api/v1/accounts/%s/conversations/%s/toggle_status", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewToggleTypingStatusOfAConversationRequest calls the generic ToggleTypingStatusOfAConversation builder with application/json body
+func NewToggleTypingStatusOfAConversationRequest(server string, accountId AccountId, conversationId ConversationId, body ToggleTypingStatusOfAConversationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewToggleTypingStatusOfAConversationRequestWithBody(server, accountId, conversationId, "application/json", bodyReader)
+}
+
+// NewToggleTypingStatusOfAConversationRequestWithBody generates requests for ToggleTypingStatusOfAConversation with any type of body
+func NewToggleTypingStatusOfAConversationRequestWithBody(server string, accountId AccountId, conversationId ConversationId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "account_id", runtime.ParamLocationPath, accountId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "conversation_id", runtime.ParamLocationPath, conversationId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/accounts/%s/conversations/%s/toggle_typing_status", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -14789,6 +14893,11 @@ type ClientWithResponsesInterface interface {
 
 	ToggleStatusOfAConversationWithResponse(ctx context.Context, accountId AccountId, conversationId ConversationId, body ToggleStatusOfAConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*ToggleStatusOfAConversationResp, error)
 
+	// ToggleTypingStatusOfAConversationWithBodyWithResponse request with any body
+	ToggleTypingStatusOfAConversationWithBodyWithResponse(ctx context.Context, accountId AccountId, conversationId ConversationId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ToggleTypingStatusOfAConversationResp, error)
+
+	ToggleTypingStatusOfAConversationWithResponse(ctx context.Context, accountId AccountId, conversationId ConversationId, body ToggleTypingStatusOfAConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*ToggleTypingStatusOfAConversationResp, error)
+
 	// GetAccountCustomAttributeWithResponse request
 	GetAccountCustomAttributeWithResponse(ctx context.Context, accountId AccountId, params *GetAccountCustomAttributeParams, reqEditors ...RequestEditorFn) (*GetAccountCustomAttributeResp, error)
 
@@ -16395,6 +16504,29 @@ func (r ToggleStatusOfAConversationResp) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ToggleStatusOfAConversationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ToggleTypingStatusOfAConversationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON401      *BadRequestError
+	JSON404      *BadRequestError
+}
+
+// Status returns HTTPResponse.Status
+func (r ToggleTypingStatusOfAConversationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ToggleTypingStatusOfAConversationResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -19119,6 +19251,23 @@ func (c *ClientWithResponses) ToggleStatusOfAConversationWithResponse(ctx contex
 		return nil, err
 	}
 	return ParseToggleStatusOfAConversationResp(rsp)
+}
+
+// ToggleTypingStatusOfAConversationWithBodyWithResponse request with arbitrary body returning *ToggleTypingStatusOfAConversationResp
+func (c *ClientWithResponses) ToggleTypingStatusOfAConversationWithBodyWithResponse(ctx context.Context, accountId AccountId, conversationId ConversationId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ToggleTypingStatusOfAConversationResp, error) {
+	rsp, err := c.ToggleTypingStatusOfAConversationWithBody(ctx, accountId, conversationId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseToggleTypingStatusOfAConversationResp(rsp)
+}
+
+func (c *ClientWithResponses) ToggleTypingStatusOfAConversationWithResponse(ctx context.Context, accountId AccountId, conversationId ConversationId, body ToggleTypingStatusOfAConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*ToggleTypingStatusOfAConversationResp, error) {
+	rsp, err := c.ToggleTypingStatusOfAConversation(ctx, accountId, conversationId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseToggleTypingStatusOfAConversationResp(rsp)
 }
 
 // GetAccountCustomAttributeWithResponse request returning *GetAccountCustomAttributeResp
@@ -22092,6 +22241,39 @@ func ParseToggleStatusOfAConversationResp(rsp *http.Response) (*ToggleStatusOfAC
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest BadRequestError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest BadRequestError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseToggleTypingStatusOfAConversationResp parses an HTTP response from a ToggleTypingStatusOfAConversationWithResponse call
+func ParseToggleTypingStatusOfAConversationResp(rsp *http.Response) (*ToggleTypingStatusOfAConversationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ToggleTypingStatusOfAConversationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest BadRequestError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
